@@ -5,25 +5,39 @@ Abdulla Tariq — simple typing speed tester web app included in this project.
 ## Files
 - `webapp.html` — single-file typing speed tester (HTML/CSS/JS)
 
-## Typing tester features
-- Difficulty selector: `Easy`, `Medium`, `Hard`
-- Multiple sample texts with `Next Sample` and `Random` sample buttons
-- Measures time, WPM and accuracy
-- Stores best WPM per difficulty in your browser (`localStorage`)
+Typing Speed Tester Web App
 
-## Usage
-Open `webapp.html` in your browser. From PowerShell you can run:
+This project includes a simple Typing Speed Tester application built using HTML, CSS, and JavaScript. The app displays a sample sentence, tracks the user’s typing speed, calculates WPM (words per minute), accuracy, total characters typed, and stores the best score for each difficulty level using localStorage.
 
-```powershell
-ii webapp.html
-# or
-Start-Process webapp.html
-```
+📄 Template File Included
 
-Click `Start` to begin typing. The test finishes automatically when your text matches the sample. Use `Reset` to stop and clear.
+The file webapp.html contains the full front-end template for the typing speed tester.
+It includes:
 
-## Notes
-- WPM calculation: (correct characters / 5) ÷ minutes
-- Best scores are saved per difficulty in the browser and shown in the UI
+Multiple difficulty levels (Easy, Medium, Hard)
 
-If you want more samples, export/import for best scores, or a standalone static site, tell me which and I'll add it.
+Predefined text samples
+
+Timer that runs live
+
+WPM calculation
+
+Accuracy calculation
+
+Best-score tracking per difficulty
+
+Clean and responsive UI styling
+
+▶️ How to Use
+
+Download or clone the repository.
+
+Open webapp.html directly in your web browser (Chrome, Edge, Firefox, etc.).
+
+Select a difficulty level from the dropdown.
+
+Click Start to begin typing.
+
+Type the displayed sample text into the textbox.
+
+Your time, WPM, accuracy, characters, and best score will automatically update.
