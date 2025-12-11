@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Simple Typing Speed Tester</title>
+		<style>
+			:root{font-family:system-ui,Segoe UI,Roboto,Arial;--bg:#f7f9fc;--card:#fff;--accent:#2b7cff}
+			html,body{height:100%;margin:0;background:var(--bg);color:#111}
+			.wrap{max-width:760px;margin:40px auto;padding:20px}
+			.card{background:var(--card);padding:20px;border-radius:10px;box-shadow:0 6px 20px rgba(20,30,50,.06)}
+			h1{margin:0 0 12px;font-size:20px}
+			p.lead{margin:0 0 18px;color:#444}
+			.sample{padding:14px;border-radius:8px;background:#f2f6fb;border:1px solid #e6eefb;color:#123;line-height:1.5}
+			.controls{display:flex;gap:8px;margin-top:12px}
+			button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+			button.secondary{background:#6b7280}
+			textarea{width:100%;height:120px;margin-top:12px;padding:12px;border-radius:8px;border:1px solid #dbe7ff;font-size:15px;resize:vertical}
+			.stats{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap}
+			.stat{background:#fff;padding:10px 12px;border-radius:8px;border:1px solid #eef4ff;min-width:120px}
+			.muted{color:#666;font-size:13px}
+			small.hint{display:block;margin-top:8px;color:#666}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<div class="card">
+				<h1>Simple Typing Speed Tester</h1>
+				<p class="lead">Type the text below as quickly and accurately as you can. Click <strong>Start</strong> to begin.</p>
+
+				<div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+					<label for="difficulty" class="muted">Difficulty:</label>
+					<select id="difficulty">
+						<option value="easy">Easy</option>
+						<option value="medium" selected>Medium</option>
+						<option value="hard">Hard</option>
+					</select>
+					<button id="nextBtn" class="secondary">Next Sample</button>
+					<button id="randomBtn" class="secondary">Random</button>
+				</div>
+
+				<div id="sample" class="sample" style="margin-top:12px">The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.</div>
+
+				<div class="controls">
+					<button id="startBtn">Start</button>
+					<button id="resetBtn" class="secondary">Reset</button>
+				</div>
+
+				<textarea id="input" placeholder="Type here..." disabled aria-label="typing input"></textarea>
+
+				<div class="stats">
+					<div class="stat"><div class="muted">Time</div><div id="time">0.00s</div></div>
+					<div class="stat"><div class="muted">WPM</div><div id="wpm">0</div></div>
+					<div class="stat"><div class="muted">Accuracy</div><div id="accuracy">0%</div></div>
+					<div class="stat"><div class="muted">Chars</div><div id="chars">0 / 0</div></div>
+					<div class="stat"><div class="muted">Best</div><div id="best">—</div></div>
+				</div>
+
+				<small class="hint">WPM is calculated as (correct characters / 5) ÷ minutes.</small>
+			</div>
+		</div>
+
+		<script>
+			const startBtn = document.getElementById('startBtn');
+			const resetBtn = document.getElementById('resetBtn');
+			const input = document.getElementById('input');
+			const sampleEl = document.getElementById('sample');
+			const timeEl = document.getElementById('time');
+			const wpmEl = document.getElementById('wpm');
+			const accuracyEl = document.getElementById('accuracy');
+			const charsEl = document.getElementById('chars');
+			const bestEl = document.getElementById('best');
+			const difficultySel = document.getElementById('difficulty');
+			const nextBtn = document.getElementById('nextBtn');
+			const randomBtn = document.getElementById('randomBtn');
+
+			// Samples with difficulty tags
+			const samples = [
+				{d:'easy', t:'The quick brown fox jumps over the lazy dog.'},
+				{d:'easy', t:'Pack my box with five dozen liquor jugs.'},
+				{d:'medium', t:'Sphinx of black quartz, judge my vow. A wizard’s job is to vex clumsy gnomes.'},
+				{d:'medium', t:'Typing quickly requires practice: accuracy first, then speed will follow.'},
+				{d:'hard', t:'When optimizing, consider algorithmic complexity and constant factors; rewrite only after measuring.'},
+				{d:'hard', t:'Asynchronous programming with promises and async/await simplifies callback hell but requires proper error handling.'}
+			];
+
+			let sampleIndex = 0;
+			let sampleText = samples[sampleIndex].t;
+			let startTime = null;
+			let timerInterval = null;
+
+			function resetState(){
+				clearInterval(timerInterval);
+				startTime = null;
+				timeEl.textContent = '0.00s';
+				wpmEl.textContent = '0';
+				accuracyEl.textContent = '0%';
+				charsEl.textContent = '0 / ' + sampleText.length;
+				input.value = '';
+				input.disabled = true;
+				updateBestDisplay();
+			}
+
+			function startTest(){
+				resetState();
+				input.disabled = false;
+				input.focus();
+				startTime = performance.now();
+				timerInterval = setInterval(updateStats, 100);
+			}
+
+			function changeSample(index){
+				sampleIndex = index % samples.length;
+				sampleText = samples[sampleIndex].t;
+				sampleEl.textContent = sampleText;
+				charsEl.textContent = '0 / ' + sampleText.length;
+				resetState();
+			}
+
+			function nextSample(){
+				const diff = difficultySel.value;
+				// find next sample with same difficulty
+				let i = sampleIndex;
+				for (let k=1;k<=samples.length;k++){
+					const cand = (i + k) % samples.length;
+					if (samples[cand].d === diff){ changeSample(cand); return; }
+				}
+				// fallback: next in list
+				changeSample(sampleIndex + 1);
+			}
+
+			function randomSample(){
+				const diff = difficultySel.value;
+				const pool = samples.map((s,i)=>({s,i})).filter(x=>x.s.d===diff);
+				if (pool.length===0){ changeSample(Math.floor(Math.random()*samples.length)); return; }
+				const pick = pool[Math.floor(Math.random()*pool.length)].i;
+				changeSample(pick);
+			}
+
+			function bestKeyForDifficulty(d){ return 'typing_best_wpm_' + d; }
+			function getBestForDifficulty(d){ return Number(localStorage.getItem(bestKeyForDifficulty(d)) || 0); }
+			function setBestForDifficulty(d,value){ localStorage.setItem(bestKeyForDifficulty(d), String(value)); }
+			function updateBestDisplay(){
+				const b = getBestForDifficulty(difficultySel.value);
+				bestEl.textContent = b > 0 ? b + ' WPM' : '—';
+			}
+
+			function updateStats(){
+				if (!startTime) return;
+				const elapsedMs = performance.now() - startTime;
+				const elapsedSec = elapsedMs / 1000;
+				timeEl.textContent = elapsedSec.toFixed(2) + 's';
+
+				const typed = input.value;
+				let correctChars = 0;
+				for (let i=0;i<typed.length && i<sampleText.length;i++){
+					if (typed[i] === sampleText[i]) correctChars++;
+				}
+				const typedChars = typed.length;
+				charsEl.textContent = typedChars + ' / ' + sampleText.length;
+
+				const minutes = Math.max(elapsedSec/60, 1/60); // avoid zero
+				const wpm = Math.round((correctChars / 5) / minutes);
+				const accuracy = typedChars === 0 ? 0 : Math.round((correctChars / typedChars) * 100);
+
+				wpmEl.textContent = isFinite(wpm) ? wpm : 0;
+				accuracyEl.textContent = accuracy + '%';
+
+				// finish when exactly matches sample
+				if (typed === sampleText){
+					clearInterval(timerInterval);
+					input.disabled = true;
+					// final update to ensure accurate WPM
+					const finalSec = (performance.now() - startTime)/1000;
+					const finalMinutes = Math.max(finalSec/60, 1/60);
+					const finalWpm = Math.round((correctChars / 5) / finalMinutes);
+					timeEl.textContent = finalSec.toFixed(2) + 's';
+					wpmEl.textContent = finalWpm;
+					// persist best per difficulty
+					const diff = difficultySel.value;
+					const prevBest = getBestForDifficulty(diff);
+					if (finalWpm > prevBest){
+						setBestForDifficulty(diff, finalWpm);
+						updateBestDisplay();
+						// small highlight
+						bestEl.style.transition = 'background .2s';
+						bestEl.style.background = '#e6fff2';
+						setTimeout(()=> bestEl.style.background = '', 900);
+					}
+				}
+			}
+
+			startBtn.addEventListener('click', ()=>{
+				startTest();
+			});
+
+			nextBtn.addEventListener('click', ()=> nextSample());
+			randomBtn.addEventListener('click', ()=> randomSample());
+
+			difficultySel.addEventListener('change', ()=>{
+				// when difficulty changes, pick a sample matching it
+				const diff = difficultySel.value;
+				const idx = samples.findIndex(s=>s.d===diff);
+				if (idx >= 0) changeSample(idx);
+				updateBestDisplay();
+			});
+
+			resetBtn.addEventListener('click', ()=>{
+				resetState();
+			});
+
+			// allow user to press Enter in textarea to stop early (optional)
+			input.addEventListener('keydown', (e)=>{
+				if (e.key === 'Escape'){
+					resetState();
+				}
+			});
+
+			// initialize
+			resetState();
+			// expose sample length on load
+			charsEl.textContent = '0 / ' + sampleText.length;
+		</script>
+	</body>
+</html>
